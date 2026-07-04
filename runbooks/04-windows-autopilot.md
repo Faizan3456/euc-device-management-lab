@@ -49,15 +49,19 @@ Enrol a Windows device into Intune with zero-touch provisioning using Windows Au
 
 ## What I Broke On Purpose
 
-_Fill in after doing the work. Example prompts: What happens if the ESP times out because a required app fails to install — does the user get stuck or does "continue anyway" kick in? What happens if I forget to assign the deployment profile before the device boots to OOBE?_
-
--
+- Ran `winrm quickconfig -quiet` while the VM's network connection profile was still **Public**. It half-configured (started the WinRM service) but failed the firewall exception step with: *"WinRM firewall exception will not work since one of the network connection types on this machine is set to Public."* Had to run `Set-NetConnectionProfile -NetworkCategory Private` first, then re-run `winrm quickconfig -quiet` — order matters here.
+- Assigned a deployment profile to a dynamic Entra ID group using the standard rule `(device.devicePhysicalIds -any (_ -eq "[ZTDId]"))`, then watched the profile's "Assigned devices" count sit at 0 for 20+ minutes. Went down the wrong path assuming it was just replication lag. Checked **Devices > All devices** in Entra and found the device had no object there at all — a hardware hash imported into the Autopilot device inventory via CSV does **not** automatically create a corresponding Entra device object, and the dynamic group rule can only match devices that already exist as Entra objects. In this setup that object doesn't seem to get created until the device actually boots and calls into the Autopilot service — so pre-assignment via dynamic group didn't visibly "take" before first boot, at least not within the timeframe I could observe.
+- Tried **Settings > Recovery > Reset this PC** to get a test VM back to OOBE. Failed immediately with *"There was a problem resetting your PC. No changes were made."* — caused by a missing/broken WinRE recovery partition, common on a manually-provisioned VM that wasn't imaged with proper recovery tooling.
+- Switched to `sysprep /oobe /generalize /shutdown` instead (from a fresh clone of a master VM image). Failed with *"Sysprep was not able to validate your Windows installation."* The setupact.log showed the real cause: **BitLocker was on for the OS volume**, and sysprep refuses to generalize an encrypted volume. Had to run `manage-bde -off C:` and wait for full decryption before sysprep would proceed.
+- The BitLocker decryption itself was extremely slow and ran in throttled background bursts (visible in Task Manager's Disk graph as periodic spikes, not continuous activity) rather than a steady linear progress — and had a nasty side effect: decrypting every sector of the volume caused the VM's thin-provisioned virtual disk file to balloon from ~19GB to ~31GB on the host Mac, which was enough to push the host's actual free disk space to zero and crash out of several tools mid-session.
 
 ## What I Learned
 
-_Fill in after doing the work._
-
--
+- Autopilot's "assign profile before first boot" pattern (via dynamic Entra group matching on ZTDId) is the documented approach, but in practice the group membership / Entra device object may not populate until the device's first real check-in with the Autopilot service — the admin console's "Assigned devices: 0" isn't necessarily a sign anything is broken, it may just mean the device hasn't phoned home yet. Don't burn time chasing that counter; the ground truth is what actually happens on screen during OOBE.
+- `winrm quickconfig` has a hard dependency on the network connection profile already being Private or Domain — running it before fixing a Public profile leaves WinRM half-configured and needs a second pass.
+- Sysprep and BitLocker are incompatible — any "golden image" VM meant to be sysprepped repeatedly for lab testing should have BitLocker/device encryption disabled (via Group Policy or registry) from the very first boot, before Windows has a chance to auto-enable it, rather than trying to decrypt after the fact.
+- A manually-built VM often lacks a working WinRE partition, so "Reset this PC" can't be relied on as a way to get back to OOBE for repeat testing — cloning a clean, pre-configured "master" VM image is a more reliable and much faster way to get a repeatable test bed than either in-place reset or sysprep-in-place.
+- Full-volume BitLocker decryption is genuinely disk-I/O-heavy and can dramatically inflate a thin-provisioned virtual disk's real footprint on the host — worth checking host disk headroom before kicking one off, especially in a resource-constrained lab environment.
 
 ## Production Considerations
 
