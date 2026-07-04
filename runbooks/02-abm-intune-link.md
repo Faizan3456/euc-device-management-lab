@@ -41,9 +41,7 @@ Link Apple Business Manager (ABM) to Intune so that Intune can see Apple devices
 
 ## What I Broke On Purpose
 
-_Fill in after doing the work. Example prompts: What happens if the push certificate Apple ID is different from the one that originally created it (re-enrolment)? What happens if I let the ABM token expire — does the sync just silently stop?_
-
--
+Hit "Failed to dynamically fetch target download uri" trying to download the Apple push cert CSR. Turned out the tenant's MDM authority was still "Unknown" because no enrolment method had ever been configured — Intune's own error message didn't say this, I had to check the browser console and find a 400 Bad Request on the underlying Graph API call before finding the real cause. Fixed by manually triggering the MDM Authority picker via a direct URL to the ChooseMDMAuthorityBlade.
 
 ## What I Learned
 
