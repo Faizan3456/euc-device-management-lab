@@ -17,7 +17,9 @@ Everything in `scripts/` is meant to be run for real, against a real (test) tena
 
 ## Who this is for
 
-Me, an IT engineer preparing for device management / EUC engineer interviews. The docs are deliberately written in simple English — plain enough to double as spoken interview answers ("walk me through what you did").
+Workplace IT engineer manage and building device management / EUC engineer.
+
+Me, an IT engineer preparing for device management / EUC engineer interviews. The docs are deliberately written in simple English — plain enough to understand easily.
 
 ## Lab scope
 
@@ -118,7 +120,7 @@ flowchart TB
 
 ## How I use this repo
 
-1. Do the portal work myself in the Microsoft Intune admin center, Entra ID, and Apple Business Manager (Claude Code cannot click through a tenant for me).
+1. Do the portal work myself in the Microsoft Intune admin center, Entra ID, and Apple Business Manager.
 2. Run the scripts in `scripts/` against my own test tenant and test devices.
 3. Fill in each runbook in `runbooks/` as I complete that stage — especially **What I Broke On Purpose** and **What I Learned**, since those are the answers I'll actually give in an interview.
 4. Use `notes/` as flash-card style interview prep.
