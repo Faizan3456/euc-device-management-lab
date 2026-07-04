@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+# postinstall
+#
+# This script is run by the installer AFTER the payload has been copied to disk,
+# as part of the component package built by pkgbuild (see ../build-pkg.sh, the
+# --scripts flag points at this folder).
+#
+# Runs as root. Must be executable (chmod +x) and named exactly "postinstall"
+# (no extension) for pkgbuild to recognize it automatically.
+#
+# Exit code matters: 0 = success. Non-zero tells the installer (and Intune, when
+# deployed via MDM) that the install failed, even though the payload files were
+# already copied - so keep this idempotent and safe to re-run.
+
+set -euo pipefail
+
+LOG_FILE="/var/log/labdemo-postinstall.log"
+
+echo "$(date): LabDemo postinstall script ran." >> "${LOG_FILE}"
+echo "$(date): Confirming payload exists at /Library/LabDemo/hello.txt" >> "${LOG_FILE}"
+
+if [ -f "/Library/LabDemo/hello.txt" ]; then
+    echo "$(date): Payload confirmed present." >> "${LOG_FILE}"
+else
+    echo "$(date): WARNING - expected payload file missing." >> "${LOG_FILE}"
+fi
+
+exit 0
