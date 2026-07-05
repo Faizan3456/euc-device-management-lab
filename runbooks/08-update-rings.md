@@ -36,15 +36,15 @@ Design and configure Windows Update for Business deployment rings so updates rol
 
 ## What I Broke On Purpose
 
-_Fill in after doing the work. Example prompts: What happens if I accidentally put the same device in both rings — which policy wins? What happens if I set deferral higher than deadline (an invalid/contradictory config) — does Intune block it or silently accept it?_
-
--
+- Built two rings — `Lab-Ring-Pilot-IT` (feature/quality deferral **0 days**, deadline 2, grace 1) and `Lab-Ring-Broad` (feature deferral **14 days**, quality **7 days**, deadline 5, grace 2) — and **deliberately assigned both to "All devices"**, so the single test device (`WIN-KH38OBH7`) is targeted by both rings at once. In a real tenant that's a misconfiguration (a device should be in exactly one update ring).
+- **Intune accepted the overlapping assignment without any error at creation time** — both rings show "Running" for quality and feature updates in the update-rings list. There's no guard rail stopping you from double-assigning; the safety is entirely on the admin's group design. When two update rings genuinely overlap on a device, the documented result is a **policy conflict** on the conflicting settings (surfaced in the per-device Windows update / settings status), not a clean "last one wins." Observing an actual patch rollout through the rings would need a real pending Windows update and days of elapsed time, which is out of scope for a single session — so the deferral/deadline behaviour here is validated by configuration, and the overlap by Intune's acceptance of it, rather than by watching a live update deploy.
 
 ## What I Learned
 
-_Fill in after doing the work._
-
--
+- **Deferral vs deadline vs grace period** are three different levers and getting them straight is the whole skill here: *deferral* = how many days after Microsoft releases an update before this ring even offers it (pilot = 0, so it gets updates first; broad = 7/14, so it waits until pilot has had a chance to surface problems); *deadline* = how long after an update is offered before it's force-installed regardless of the user snoozing; *grace period* = the minimum time a user is guaranteed even if the deadline had already passed when the device came online.
+- The entire reason rings exist is a **phased rollout with a go/no-go gate**: pilot (IT) validates an update, and only if it's clean does it reach the broad population. That only works if a device is in exactly **one** ring — which is why production builds rings on non-overlapping dynamic groups and excludes the pilot group from the broad ring. This lab deliberately violated that (both rings on "All devices") to see that Intune won't stop you.
+- Intune does **not** validate ring assignments for overlap or for contradictory deferral/deadline combos at creation time — it silently accepts them. The correctness burden is on group design, and problems show up later as per-device conflicts, not as an upfront error.
+- **Pausing a ring ≠ unassigning it:** pausing (Update rings > ring > Pause) temporarily stops offering updates to that ring's devices while keeping the policy and assignment intact, and is reversible with Resume — useful when a bad update is discovered mid-rollout. Unassigning removes the policy relationship entirely. Pause is the "stop the bleeding" button; unassign is a structural change.
 
 ## Production Considerations
 
