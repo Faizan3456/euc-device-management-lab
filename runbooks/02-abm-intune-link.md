@@ -15,6 +15,9 @@ Link Apple Business Manager (ABM) to Intune so that Intune can see Apple devices
 
 1. **Get the Apple MDM Push Certificate (APNs certificate)**
    1. In the Intune admin center, go to **Devices > Apple > Apple MDM Push certificate**.
+
+      ![Configure MDM Push Certificate panel in Intune, showing the prerequisite steps to agree to Microsoft's permission, download the CSR, and create the Apple MDM push certificate](../assets/screenshots/02-macos-enrollment-mdm-push-cert-steps.png)
+
    2. Download the CSR (certificate signing request) that Intune generates.
       - `[screenshot: Intune - download CSR]`
    3. Go to the [Apple Push Certificates Portal](https://identity.apple.com) and sign in with the dedicated MDM Apple ID.
@@ -41,7 +44,15 @@ Link Apple Business Manager (ABM) to Intune so that Intune can see Apple devices
 
 ## What I Broke On Purpose
 
-Hit "Failed to dynamically fetch target download uri" trying to download the Apple push cert CSR. Turned out the tenant's MDM authority was still "Unknown" because no enrolment method had ever been configured — Intune's own error message didn't say this, I had to check the browser console and find a 400 Bad Request on the underlying Graph API call before finding the real cause. Fixed by manually triggering the MDM Authority picker via a direct URL to the ChooseMDMAuthorityBlade.
+Hit "Failed to dynamically fetch target download uri" trying to download the Apple push cert CSR.
+
+![Intune admin center showing a "File download error: Failed to dynamically fetch target download uri" toast on the Configure MDM Push Certificate panel](../assets/screenshots/02-mdm-push-cert-download-error.png)
+
+Turned out the tenant's MDM authority was still "Unknown" because no enrolment method had ever been configured — Intune's own error message didn't say this, I had to check the browser console and find a 400 Bad Request on the underlying Graph API call before finding the real cause.
+
+![Firefox DevTools Network tab open against intune.microsoft.com, used to trace the actual failing request behind the generic UI error](../assets/screenshots/02-devtools-network-diagnosis.png)
+
+Fixed by manually triggering the MDM Authority picker via a direct URL to the ChooseMDMAuthorityBlade.
 
 ## What I Learned
 

@@ -35,11 +35,23 @@ Me, an IT engineer preparing for device management / EUC engineer interviews. Th
 | Certificates | SCEP certificate profile for Wi-Fi/VPN authentication |
 | Reporting | Microsoft Graph API scripts for compliance reporting |
 
+## Screenshots
+
+A few real screenshots from doing this hands-on, taken while working through the runbooks below. More get added as each stage is actually completed — see the runbook itself for the full "What I Broke On Purpose" story behind each one.
+
+| | |
+|---|---|
+| ![MDM push certificate download error](assets/screenshots/02-mdm-push-cert-download-error.png) | ![Diagnosing the error via browser DevTools](assets/screenshots/02-devtools-network-diagnosis.png) |
+| Runbook 02 — the generic Intune error that sent me digging into DevTools | Runbook 02 — tracing the real failing request behind that error |
+| ![Autopilot dynamic device group properties](assets/screenshots/04-autopilot-dynamic-group-properties.png) | ![macOS enrollment MDM push certificate steps](assets/screenshots/02-macos-enrollment-mdm-push-cert-steps.png) |
+| Runbook 04 — the dynamic Entra ID group used for Autopilot profile assignment | Runbook 02 — the Apple MDM push certificate setup flow in Intune |
+
 ## Repository structure
 
 ```
 euc-device-management-lab/
 ├── README.md                          <- you are here
+├── assets/screenshots/                <- real screenshots from doing the work, referenced from runbooks
 ├── runbooks/                          <- one runbook per lab stage, filled in as I go
 │   ├── 01-tenant-setup.md
 │   ├── 02-abm-intune-link.md
