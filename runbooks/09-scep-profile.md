@@ -41,17 +41,31 @@ Deploy a device certificate via SCEP (Simple Certificate Enrolment Protocol) thr
    2. Test connecting to the test SSID/VPN and confirm no username/password prompt appears — auth happens silently via the cert.
       - `[screenshot: successful cert-based connection]`
 
+## How this was actually done: Microsoft Cloud PKI (no on-prem CA/NDES)
+
+The prerequisites list an on-prem AD CS + NDES server or a cloud SCEP service as the CA. This tenant's **Intune Suite license includes Microsoft Cloud PKI**, so the entire certificate authority was stood up **in the cloud, inside Intune** — no on-prem AD CS, no NDES connector, no server to maintain. This is the modern, cloud-only path and it worked end-to-end:
+
+1. **Built a two-tier CA hierarchy in Cloud PKI** (Tenant admin > Cloud PKI): a **Root CA** (`Lab-Root-CA`, RSA-4096/SHA-512, EKU constrained to Client Authentication, 10-year) and an **Issuing CA** (`Lab-Issuing-CA`, chained to the root, RSA-4096/SHA-512, 5-year). The Intune-hosted root **auto-signed** the issuing CA's request (status went "Signing pending" -> "Active" on its own; the Download-CSR/Upload-signed-cert buttons are only for bring-your-own external roots).
+2. **Trusted certificate profile** (`Lab-Trusted-Root-CA`) deploying the root CA cert to the device's Computer > Trusted Root store.
+3. **SCEP certificate profile** (`Lab-SCEP-Device-Cert`): subject `CN={{AAD_Device_ID}}`, TPM-if-present KSP, Digital signature + Key encipherment, 2048-bit leaf key, EKU Client Authentication, referencing the trusted-root profile and the Cloud PKI issuing CA's SCEP URI.
+4. Assigned both profiles to the device, restarted it to force check-in.
+
+**Verified on-device with `certlm.msc` (the ground truth):**
+- Trusted Root store contains **Lab Root CA**.
+- Personal store contains a certificate **Issued By "Lab Issuing CA"**, subject = the device's AAD Device ID (`52022cd1-4714-...`) — which matches exactly the `DeviceId` from `dsregcmd /status`. The device generated a keypair, sent a CSR to the cloud issuing CA over SCEP, and the issued leaf cert landed in the Personal store chaining to the root. Full success.
+
 ## What I Broke On Purpose
 
-_Fill in after doing the work. Example prompts: What happens if the SCEP profile's root certificate reference doesn't match the actual CA — does the device fail silently or show an explicit error in the certificate status blade? What happens if I let the NDES service account password expire (or simulate it by pointing at an unreachable URL)?_
-
--
+- **The Create-CA wizard's root CA picker showed "No matching CAs found"** even when the exact root CA name was typed in full, immediately after the root went Active — a stale cached list in the wizard. Confusingly, the issuing CA creation actually *succeeded* despite the picker looking empty; closing and reopening the wizard (or refreshing the Cloud PKI list) resolved the display. Lesson: don't trust an empty picker right after creating a dependency — refresh first.
+- **The Intune-side SCEP profile "Device status" showed 0 records / "No results" even after the certificate was confirmed issued on the device.** Same admin-center reporting lag seen throughout this lab (Win32 install status, compliance, update rings) — the portal report trails real device state by many minutes. `certlm.msc` on the device proved issuance succeeded well before the portal caught up. Never conclude "it failed" from a lagging admin-center report alone.
 
 ## What I Learned
 
-_Fill in after doing the work._
-
--
+- **Microsoft Cloud PKI removes the single biggest barrier to SCEP** — the traditional on-prem AD CS + NDES + Intune Certificate Connector stack (and its notorious NDES service-account-password outages). A cloud-only org can stand up a full CA hierarchy and issue device certs entirely from Intune. For a lab, it turns a runbook that would otherwise need a Windows Server VM into a 20-minute portal exercise.
+- **The two-tier design mirrors real PKI practice:** the root CA constrains what its issuing CA (and their leaf certs) can do via EKUs — setting Client Authentication on the root cascaded down so the whole chain is scoped to device/user auth. Only *issuing* CAs issue leaf certs; the root exists to anchor trust.
+- **The SCEP flow has three moving parts working together:** the trusted-root profile makes the device *trust* the CA, the SCEP profile makes the device *generate a keypair and request* a cert from the CA's SCEP endpoint, and the issued leaf cert lands in the Personal store *chaining* to that trusted root. Miss any one (no trusted root, wrong SCEP URL, wrong root reference in the SCEP profile) and either no cert issues or it issues but won't validate.
+- **`CN={{AAD_Device_ID}}` gives a stable, unique, verifiable subject** — it matches `dsregcmd /status`'s DeviceId, so you can prove on the device exactly which Entra device a cert belongs to.
+- This SCEP-issued cert is what a **Wi-Fi/VPN profile (EAP-TLS)** would then reference for passwordless, certificate-based network authentication — the ultimate purpose of the whole exercise.
 
 ## Production Considerations
 
