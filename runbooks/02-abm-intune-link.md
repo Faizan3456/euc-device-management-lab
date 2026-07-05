@@ -33,7 +33,8 @@ Link Apple Business Manager (ABM) to Intune so that Intune can see Apple devices
    3. Upload that public key into the new ABM MDM server entry, then download the resulting **server token** (`.p7m` file) from ABM.
       - `[screenshot: ABM - server token downloaded]`
    4. Upload the `.p7m` token into Intune under **Devices > Apple > Automated Device Enrolment**.
-      - `[screenshot: Intune - ADE token uploaded successfully, showing token expiry]`
+
+      ![Intune enrollment program token "Intune-Lab-MDM" showing Status: Active, Expiration Date, and Last Sync Status: Success](../assets/screenshots/02-abm-enrollment-program-token-status.webp)
 3. **Assign devices to the MDM server in ABM**
    1. In ABM, go to **Devices**, find (or add) my test Mac by serial number, and assign it to the `Intune-Lab-MDM` server.
       - `[screenshot: ABM - device assigned to MDM server]`

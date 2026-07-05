@@ -41,6 +41,8 @@ A few real screenshots from doing this hands-on, taken while working through the
 
 | | |
 |---|---|
+| ![Intune Devices showing a real device enrolled, Managed by Intune, and Compliant](assets/screenshots/05-intune-device-enrolled-compliant.webp) | ![Task Scheduler showing the MDM auto-enrollment task after fixing four stacked root causes](assets/screenshots/05-task-scheduler-enterprisemgmt-task-created.webp) |
+| Runbook 05 — a real device, manually enrolled into Intune, Corporate-owned and Compliant | Runbook 05 — the auto-enrollment scheduled task, created after tracing a missing Group Policy setting |
 | ![MDM push certificate download error](assets/screenshots/02-mdm-push-cert-download-error.png) | ![Diagnosing the error via browser DevTools](assets/screenshots/02-devtools-network-diagnosis.png) |
 | Runbook 02 — the generic Intune error that sent me digging into DevTools | Runbook 02 — tracing the real failing request behind that error |
 | ![Autopilot dynamic device group properties](assets/screenshots/04-autopilot-dynamic-group-properties.png) | ![macOS enrollment MDM push certificate steps](assets/screenshots/02-macos-enrollment-mdm-push-cert-steps.png) |
