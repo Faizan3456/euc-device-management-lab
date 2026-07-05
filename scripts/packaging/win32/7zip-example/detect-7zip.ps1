@@ -30,8 +30,14 @@ $uninstallKeys = @(
     "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
 )
 
+# NOTE: use a prefix match (-like "7-Zip*"), NOT an exact match (-eq "7-Zip").
+# 7-Zip registers its uninstall DisplayName as e.g. "7-Zip 23.01 (x64)", so an
+# exact match on "7-Zip" finds nothing -> detection fails -> Intune reports the
+# app as "failed" even though it installed fine. A prefix match tolerates the
+# version/architecture suffix while still being specific enough not to match
+# unrelated apps.
 $installed = Get-ItemProperty -Path $uninstallKeys -ErrorAction SilentlyContinue |
-    Where-Object { $_.DisplayName -eq $appName }
+    Where-Object { $_.DisplayName -like "$appName*" }
 
 if ($installed -and $installed.DisplayVersion) {
     # Detected: write anything to STDOUT and exit 0.
