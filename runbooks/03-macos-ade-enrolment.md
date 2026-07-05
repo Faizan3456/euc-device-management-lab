@@ -35,17 +35,20 @@ Enrol a Mac into Intune automatically at first boot (zero-touch), using Automate
       - `[screenshot or terminal output: check-mdm-enrolment.sh result]`
 6. **Fallback if I don't have an ADE-eligible Mac**: do a manual/BYOD-style enrolment instead (Company Portal app, "Sign in" > device enrolment), and note in "What I Learned" the practical differences vs. true ADE (user sees more prompts, device is marked `Personal` unless corporate identifiers are set, and there's no "Remote Management" auto-detect screen).
 
-## What I Broke On Purpose
+## Status: blocked — infrastructure gap (not attempted hands-on)
 
-_Fill in after doing the work. Example prompts: What happens if I try to enrol a Mac whose serial isn't in the ADE token's device list? What happens if I turn off Wi-Fi mid-Setup-Assistant? What happens if the enrolment profile requires an account not licensed for Intune?_
+This runbook was **not performed hands-on**, for a concrete reason rather than lack of time: real ADE requires a Mac actually assigned to this organization's Apple Business Manager account, and the only Mac available is the daily-driver work machine, already enrolled in the employer's own Mosyle MDM — it can't be wiped or re-enrolled for lab use. The ABM↔Intune trust and enrolment token side is done and verified in [02-abm-intune-link.md](02-abm-intune-link.md); what's missing is a device on the Apple side to actually run through Setup Assistant.
 
--
+Two ways to unblock this in future, neither yet actioned:
+- **BYOD / manual enrolment fallback** (free) — demonstrates Company Portal enrolment mechanics, but not true zero-touch ADE.
+- **Buy a cheap used Apple Silicon Mac mini (~£300)** and add it to ABM manually via Apple Configurator 2 — gives a genuine ADE test path.
 
-## What I Learned
+## What I Learned (conceptual — from the ABM/token work and planning, pending a live run)
 
-_Fill in after doing the work._
-
--
+- ADE's trust chain is a specific sequence: a device's **serial number** is assigned to an MDM server in ABM → ABM syncs that assignment to Intune (via the enrolment token) → when the Mac hits Setup Assistant it phones home to Apple, is told it belongs to an MDM, and pulls its enrolment profile. No agent install, no user action — enrolment is driven entirely by the serial being known to ABM.
+- The critical production distinction is **ADE (supervised, MDM non-removable, enforced at Setup Assistant)** vs **BYOD/manual (user-initiated, MDM removable by the user)**. Only ADE gives the corporate-owned, zero-touch posture; the fallback path looks similar but the user can walk the enrolment back.
+- A Mac can only go through ADE if it's actually in ABM — realistically meaning bought through Apple/a reseller tied to the ABM account, or hand-added via Apple Configurator 2. You can't retroactively ADE-enrol an arbitrary Mac, which is exactly why the daily-driver work Mac (in someone else's MDM) can't be used here.
+- **Still untested (needs the live run):** the deliberate-break scenarios — enrolling a Mac whose serial isn't in the token's list, dropping Wi-Fi mid-Setup-Assistant, requiring an account not licensed for Intune. Noted honestly as open rather than guessed at.
 
 ## Production Considerations
 

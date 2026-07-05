@@ -28,15 +28,18 @@ Stand up a Microsoft 365 tenant with Intune licensing, so I have a real environm
 
 ## What I Broke On Purpose
 
-_Fill in after doing the work. Example prompts to answer: Did I assign a license to the wrong account and see what happens to enrolment? Did I try enrolling a device before any license was assigned, to see the error?_
+The tenant was stood up and is fully functional, but several setup-time decisions were left at their defaults and only revealed themselves as problems much later, in other runbooks — which is itself the lesson: a tenant can look "done" and still be quietly misconfigured in ways that block work downstream.
 
--
+- **No dedicated non-admin test user existed** — only the Global Admin account. This wasn't noticed until [05-compliance-and-conditional-access.md](05-compliance-and-conditional-access.md), where a test user was needed (you can't safely test Conditional Access against a Global Admin). Had to create `Lab Test User` then.
+- **Security Defaults was left enabled.** This silently blocks custom Conditional Access policies — Entra refuses to enable a CA policy while Security Defaults is on. Only surfaced when the first CA policy was created in runbook 05, where Security Defaults had to be turned off.
+- **The MDM user scope was left at "None"** (Entra ID > Mobility > Microsoft Intune). This meant Entra-joined devices never auto-enrolled into Intune, which cost significant troubleshooting time in runbook 05 before it was traced back to this tenant-setup default.
 
 ## What I Learned
 
-_Fill in after doing the work._
-
--
+- Assigning **Intune-included licenses to users cannot be done from the Intune admin center's own Users blade** — it must be done in the Microsoft 365 admin center (Users > Active users > Licenses and apps). The Intune Users blade shows licenses read-only and links out to M365 for changes.
+- Several tenant **defaults will silently block later work** rather than erroring at setup time: Security Defaults being on blocks Conditional Access, and MDM user scope being None blocks auto-enrolment. Worth deliberately setting these during initial tenant setup instead of discovering them mid-troubleshooting weeks later.
+- Least-privilege is worth practising from the start: a scoped **Intune Administrator** role for day-to-day work rather than Global Admin, at least one break-glass Global Admin held aside, and security groups (`Lab-Test-Devices`, `Lab-Test-Users`) to scope policies to instead of "All users/All devices" — all mirror how a real production tenant is run.
+- Licensing must exist **before** enrolment: an unlicensed user can Entra-join a device but it won't successfully enrol/manage, and the failure isn't an obvious licensing message.
 
 ## Production Considerations
 

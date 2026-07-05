@@ -57,9 +57,10 @@ Fixed by manually triggering the MDM Authority picker via a direct URL to the Ch
 
 ## What I Learned
 
-_Fill in after doing the work._
-
--
+- Intune's own error messages are frequently too generic to diagnose from ("Failed to dynamically fetch target download uri" told me nothing). Opening the browser's DevTools Network tab and watching the underlying Graph API call — which showed a 400 Bad Request the UI never surfaced — was faster and more reliable than guessing from the visible error.
+- The push-certificate flow silently depends on the tenant's **MDM authority** already being set. A brand-new tenant that has never had any enrolment method configured shows MDM authority as "Unknown," and that blocks the Apple push cert CSR download with an unrelated-looking error. Setting the MDM authority (which now happens implicitly for new Intune tenants, but had to be forced here via the ChooseMDMAuthorityBlade URL) is a prerequisite that isn't obvious from the push-cert screen itself.
+- The two Apple trust relationships are genuinely independent: the **MDM push certificate** (Apple trusts Intune to talk to devices) and the **ABM server/enrolment token** (Intune trusts ABM to say which devices are mine). One can be working while the other isn't — here the token setup succeeded cleanly (Active, Last Sync: Success) even while the push cert flow was still erroring.
+- Both the push certificate and the ABM token expire annually and are single points of failure: the push cert must be renewed with the **same Apple ID** that created it (losing that Apple ID means re-enrolling every Apple device), and the token needs a manual re-sync/renewal. Worth a calendar reminder and shared-mailbox Apple ID in production.
 
 ## Production Considerations
 
