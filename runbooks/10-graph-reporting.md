@@ -36,6 +36,8 @@ Pull device compliance data directly out of Intune using the Microsoft Graph API
 - `Get-DeviceComplianceReport.ps1` failed with a real Graph error: **`400 (BadRequest): Could not find a property named 'ownerType' on type 'microsoft.graph.managedDevice'`**. The script's `-Property` (OData `$select`) list requested `ownerType`, but the actual property on the `managedDevice` entity is **`managedDeviceOwnerType`**. Because a bad property name 400s the *entire* request, no devices came back — and the script's `if (-not $devices)` guard then misreported it as **"No managed devices found in this tenant"**, which is dangerously misleading: it looked like an empty tenant when it was really a malformed query. Fixed the property name (and the value mapping to `$_.ManagedDeviceOwnerType`), re-ran, and got the real device back.
 - `Get-NonCompliantDevices.ps1` returned **"No noncompliant devices found. Fleet is clean."** — and that is the *correct* answer, because the one enrolled device (`WIN-KH38OBH7`) is Compliant. This is a genuine zero result from a valid query, which sits in useful contrast to the error-masquerading-as-zero above.
 
+![Terminal output of Get-DeviceComplianceReport.ps1 pulling WIN-KH38OBH7 (Windows, compliant) from the Microsoft Graph API, with a compliance-state breakdown and CSV export path](../assets/screenshots/10-graph-compliance-report.png)
+
 ## What I Learned
 
 - Graph's OData `$select` uses the **exact entity property names**, which don't always match intuition or the friendlier SDK output names — it's `managedDeviceOwnerType`, not `ownerType`. A wrong property name is a hard 400 that fails the whole request, not a silently-ignored field.

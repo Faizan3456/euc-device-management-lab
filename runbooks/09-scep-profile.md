@@ -50,8 +50,13 @@ The prerequisites list an on-prem AD CS + NDES server or a cloud SCEP service as
 3. **SCEP certificate profile** (`Lab-SCEP-Device-Cert`): subject `CN={{AAD_Device_ID}}`, TPM-if-present KSP, Digital signature + Key encipherment, 2048-bit leaf key, EKU Client Authentication, referencing the trusted-root profile and the Cloud PKI issuing CA's SCEP URI.
 4. Assigned both profiles to the device, restarted it to force check-in.
 
+![Intune Devices > Configuration showing the two profiles created: Lab-SCEP-Device-Cert (SCEP certificate) and Lab-Trusted-Root-CA (Trusted certificate)](../assets/screenshots/09-scep-profiles-created.webp)
+
 **Verified on-device with `certlm.msc` (the ground truth):**
-- Trusted Root store contains **Lab Root CA**.
+- Trusted Root store contains **Lab Root CA** (delivered by the trusted-root profile):
+
+  ![certlm.msc Local Computer Trusted Root Certification Authorities store showing "Lab Root CA" deployed to the device](../assets/screenshots/09-scep-root-ca-in-trusted-store.png)
+
 - Personal store contains a certificate **Issued By "Lab Issuing CA"**, subject = the device's AAD Device ID (`52022cd1-4714-...`) — which matches exactly the `DeviceId` from `dsregcmd /status`. The device generated a keypair, sent a CSR to the cloud issuing CA over SCEP, and the issued leaf cert landed in the Personal store chaining to the root. Full success.
 
 ## What I Broke On Purpose

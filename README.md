@@ -43,6 +43,10 @@ A few real screenshots from doing this hands-on, taken while working through the
 |---|---|
 | ![Intune Devices showing a real device enrolled, Managed by Intune, and Compliant](assets/screenshots/05-intune-device-enrolled-compliant.webp) | ![Task Scheduler showing the MDM auto-enrollment task after fixing four stacked root causes](assets/screenshots/05-task-scheduler-enterprisemgmt-task-created.webp) |
 | Runbook 05 — a real device, manually enrolled into Intune, Corporate-owned and Compliant | Runbook 05 — the auto-enrollment scheduled task, created after tracing a missing Group Policy setting |
+| ![certlm.msc on the device showing Lab Root CA deployed via a Cloud PKI trusted-root profile](assets/screenshots/09-scep-root-ca-in-trusted-store.png) | ![Terminal pulling the device compliance report from the Microsoft Graph API](assets/screenshots/10-graph-compliance-report.png) |
+| Runbook 09 — a cloud-hosted CA (Microsoft Cloud PKI) deployed to a device, no on-prem server | Runbook 10 — device compliance pulled straight from the Graph API via PowerShell |
+| ![Intune Win32 app 7-zip showing Installed after fixing an ARM64 requirement and a detection-rule bug](assets/screenshots/06-7zip-installed.webp) | ![Two Windows Update rings, pilot and broad, both running](assets/screenshots/08-update-rings.webp) |
+| Runbook 06 — a Win32 app (7-Zip) packaged and deployed to a verified Installed state | Runbook 08 — pilot and broad Windows Update rings |
 | ![MDM push certificate download error](assets/screenshots/02-mdm-push-cert-download-error.png) | ![Diagnosing the error via browser DevTools](assets/screenshots/02-devtools-network-diagnosis.png) |
 | Runbook 02 — the generic Intune error that sent me digging into DevTools | Runbook 02 — tracing the real failing request behind that error |
 | ![Autopilot dynamic device group properties](assets/screenshots/04-autopilot-dynamic-group-properties.png) | ![macOS enrollment MDM push certificate steps](assets/screenshots/02-macos-enrollment-mdm-push-cert-steps.png) |
