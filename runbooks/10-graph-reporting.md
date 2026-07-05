@@ -32,15 +32,20 @@ Pull device compliance data directly out of Intune using the Microsoft Graph API
 
 ## What I Broke On Purpose
 
-_Fill in after doing the work. Example prompts: What happens if I request a scope I don't have consent for — does the script fail at connect time or at the API call? What happens if I run the report against zero enrolled devices — does it handle the empty result gracefully?_
-
--
+- `Connect-Lab.ps1` worked first try — interactive browser sign-in as the Intune admin, and the consent granted exactly the two read-only scopes requested (`DeviceManagementManagedDevices.Read.All`, `DeviceManagementConfiguration.Read.All`) plus the base `openid`/`profile`/`email`. Confirmed via `Get-MgContext` that no write scopes were granted — least-privilege consent working as intended.
+- `Get-DeviceComplianceReport.ps1` failed with a real Graph error: **`400 (BadRequest): Could not find a property named 'ownerType' on type 'microsoft.graph.managedDevice'`**. The script's `-Property` (OData `$select`) list requested `ownerType`, but the actual property on the `managedDevice` entity is **`managedDeviceOwnerType`**. Because a bad property name 400s the *entire* request, no devices came back — and the script's `if (-not $devices)` guard then misreported it as **"No managed devices found in this tenant"**, which is dangerously misleading: it looked like an empty tenant when it was really a malformed query. Fixed the property name (and the value mapping to `$_.ManagedDeviceOwnerType`), re-ran, and got the real device back.
+- `Get-NonCompliantDevices.ps1` returned **"No noncompliant devices found. Fleet is clean."** — and that is the *correct* answer, because the one enrolled device (`WIN-KH38OBH7`) is Compliant. This is a genuine zero result from a valid query, which sits in useful contrast to the error-masquerading-as-zero above.
 
 ## What I Learned
 
-_Fill in after doing the work._
+- Graph's OData `$select` uses the **exact entity property names**, which don't always match intuition or the friendlier SDK output names — it's `managedDeviceOwnerType`, not `ownerType`. A wrong property name is a hard 400 that fails the whole request, not a silently-ignored field.
+- A failed query can **masquerade as an empty result** when a script swallows the error and only checks "did I get any rows." Always distinguish *"the query errored"* from *"the query legitimately returned zero"* — here the noncompliant script's true zero (device is compliant) vs the compliance script's error-that-looked-like-zero was a perfect side-by-side of the two.
+- Least-privilege consent is real and verifiable: requesting only `Read.All` scopes granted exactly those, no write access, confirmed in `Get-MgContext.Scopes`. This is the interview-safe answer to "how would you pull Intune data without over-permissioning."
+- Pulling compliance data via Graph gives the **same ground truth** as *Devices > Monitor > Device compliance* in the portal (cross-checked: 1 compliant device both ways), but scriptable, filterable, and exportable to CSV — which is the entire reason real reporting/automation uses Graph instead of the UI.
+- The SDK's `-All` switch follows `@odata.nextLink` automatically, so the query returns the complete device list rather than just the first page — the pagination bug that bites hand-rolled REST calls is handled for you.
+- Interactive/delegated auth (a human clicking a browser consent) is fine for a lab or ad-hoc report, but a real scheduled pipeline should use an app registration with certificate-based auth + application permissions — no human in the loop.
 
--
+An example of the exported report (sanitized) is committed at [scripts/graph/sample-output.csv](../scripts/graph/sample-output.csv).
 
 ## Production Considerations
 
