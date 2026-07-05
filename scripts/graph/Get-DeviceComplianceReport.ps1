@@ -25,8 +25,12 @@ Write-Host "Fetching managed devices from Microsoft Graph..." -ForegroundColor C
 
 # Get-MgDeviceManagementManagedDevice with -All follows @odata.nextLink automatically,
 # so we get the complete device list, not just the first page.
+# NOTE: the ownership property on the managedDevice entity is
+# 'managedDeviceOwnerType', NOT 'ownerType'. Requesting a property name that
+# doesn't exist makes Graph return a 400 (BadRequest) and the whole query fails,
+# which this script would otherwise misreport as "no managed devices found".
 $devices = Get-MgDeviceManagementManagedDevice -All -Property `
-    "deviceName,operatingSystem,osVersion,complianceState,lastSyncDateTime,userPrincipalName,managementAgent,ownerType"
+    "deviceName,operatingSystem,osVersion,complianceState,lastSyncDateTime,userPrincipalName,managementAgent,managedDeviceOwnerType"
 
 if (-not $devices -or $devices.Count -eq 0) {
     Write-Warning "No managed devices found in this tenant. Nothing to report."
@@ -42,7 +46,7 @@ $report = $devices | ForEach-Object {
         LastSyncDateTime = $_.LastSyncDateTime
         UserPrincipalName = $_.UserPrincipalName
         ManagementAgent  = $_.ManagementAgent
-        OwnerType        = $_.OwnerType
+        OwnerType        = $_.ManagedDeviceOwnerType
     }
 }
 
