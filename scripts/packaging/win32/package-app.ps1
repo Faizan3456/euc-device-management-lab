@@ -76,5 +76,5 @@ if ($producedFile) {
     Write-Host "`nSuccess: $($producedFile.FullName)" -ForegroundColor Green
     Write-Host "Upload this file in Intune under Apps > Windows > Add > Win32 app." -ForegroundColor Green
 } else {
-    Write-Warning "No .intunewin file found in $OutputFolder — check the tool's output above for errors."
+    Write-Warning "No .intunewin file found in $OutputFolder - check the tool's output above for errors."
 }
